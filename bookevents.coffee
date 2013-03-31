@@ -32,17 +32,19 @@ waitFor = (testFx, onReady, timeOutMillis=3000) ->
 
 page = require('webpage').create()
 
-# Open Twitter on 'sencha' profile and, onPageLoad, do...
-page.open 'http://twitter.com/#!/sencha', (status) ->
+# Get target bookstore events list.
+page.open 'http://harvard.com/events', (status) ->
   # Check for page load success
   if status isnt 'success'
     console.log 'Unable to access network'
   else
-    # Wait for 'signin-dropdown' to be visible
+    # Wait for page to be populated
     waitFor ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
-        $('#signin-dropdown').is ':visible'
+        document.getElementsByClassName("event").length > 0
     , ->
-       console.log 'The sign-in dialog should be visible now.'
-       phantom.exit()
+      nevents = page.evaluate ->
+        document.getElementsByClassName("event").length
+      console.log nevents
+      phantom.exit()
