@@ -42,9 +42,9 @@ page.open 'http://harvard.com/events', (status) ->
     waitFor ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
-        document.getElementsByClassName("event").length > 0
+        ($(".event").size()) > 0
     , ->
       nevents = page.evaluate ->
-        document.getElementsByClassName("event").length
+        $(".event").size()
       console.log nevents
       phantom.exit()
