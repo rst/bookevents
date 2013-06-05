@@ -29,17 +29,21 @@ waitFor = (testFx, onReady, timeOutMillis=8000) ->
         clearInterval interval #< Stop this interval
   interval = setInterval f, 250 #< repeat check every 250ms
 
-
 page = require('webpage').create()
 
-# Get target bookstore events list.
-page.open 'http://harvard.com/events', (status) ->
-  # Check for page load success
-  if status isnt 'success'
-    console.log 'Unable to access network'
-  else
-    # Wait for page to be populated
-    waitFor ->
+handle_page = (url, testFx, onReady, kont) ->
+  page.open url, (status) ->
+    if status isnt 'success'
+      console.log 'Failed on ' + url
+      kont()
+    else
+      waitFor testFx, ->
+        onReady()
+        kont()
+
+harvard = (kont) ->
+  handle_page 'http://harvard.com/events',
+    ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
         ($(".event_right_details").size()) > 0
@@ -50,7 +54,9 @@ page.open 'http://harvard.com/events', (status) ->
            events_arr_inner.push( $(this).text() ))
         events_arr_inner
 
-      console.log "---"
-      console.log events_arr.length
-      console.log event_html for event_html in events_arr
-      phantom.exit()
+      for event_html in events_arr
+        console.log "-----"
+        console.log event_html
+    , kont
+
+harvard( -> phantom.exit() )
