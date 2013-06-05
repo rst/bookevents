@@ -43,50 +43,41 @@ handle_page = (kont, url, testFx, onReady) ->
         kont()
 
 harvard_bkstore = (kont) ->
-  handle_page kont, 'http://harvard.com/events',
-    ->
+  handle_page kont, 'http://harvard.com/events'
+    , ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
         ($(".event_right").size()) > 0
     , ->
-      events_arr = page.evaluate ->
-        events_arr_inner = []
-        $(".event_right").each( ->
-          events_arr_inner.push({
-            headline:    $("h2", this).html(),
-            description: $(".event_intro", this).html(),
-            date:        $(".event_listing_bubble_date", this).html(),
-            location:    $(".event_listing_bubble_location", this).html()
-          }))
-        events_arr_inner
-
-      add_event(event) for event in events_arr
+      add_event(event) for event in page.evaluate ->
+        $(".event_right").map( -> {
+          headline:    $("h2", this).html(),
+          description: $(".event_intro", this).html(),
+          date:        $(".event_listing_bubble_date", this).html(),
+          location:    $(".event_listing_bubble_location", this).html()
+        }).get()
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
 
 harvard_coop = (kont) ->
-  handle_page kont, coop_url,
-    ->
+  handle_page kont, coop_url
+    , ->
       page.evaluate ->
         document.getElementById('dynamicCOE').firstChild != null
     , ->
       page.injectJs jquery_url
-      events_arr = page.evaluate ->
-        events_arr_inner = []
-        $("#dynamicCOE td").has("div.pLeft10").each( ->
+      add_event(event) for event in page.evaluate ->
+        $("#dynamicCOE td").has("div.pLeft10").map( ->
           divs = $("div.pLeft10", this)
-          html = $(divs[1]).html()
           # Note that what comes out here is messy, with "LOCATION" in the
           # location, and ugly and superfluous comments just about everywhere.
-          events_arr_inner.push({
+          {
             headline:    $(divs[1]).html(),
             description: $(divs[2]).html(),
             date:        $(divs[0]).html(),
             location:    "Harvard COOP " + $(divs[4]).html()
-          }))
-        events_arr_inner
-
-      add_event(event) for event in events_arr
+          }
+        ).get()
 
 harvard_coop( -> harvard_bkstore( -> dump_events(); phantom.exit() ))
