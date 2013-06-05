@@ -10,7 +10,7 @@
 # as a callback function.
 # @param timeOutMillis the max amount of time to wait. If not specified, 3 sec is used.
 ##
-waitFor = (testFx, onReady, timeOutMillis=3000) ->
+waitFor = (testFx, onReady, timeOutMillis=8000) ->
   start = new Date().getTime()
   condition = false
   f = ->
@@ -42,9 +42,15 @@ page.open 'http://harvard.com/events', (status) ->
     waitFor ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
-        ($(".event").size()) > 0
+        ($(".event_right_details").size()) > 0
     , ->
-      nevents = page.evaluate ->
-        $(".event").size()
-      console.log nevents
+      events_arr = page.evaluate ->
+        events_arr_inner = []
+        $(".event_right_details").each( (node) ->
+           events_arr_inner.push( $(this).text() ))
+        events_arr_inner
+
+      console.log "---"
+      console.log events_arr.length
+      console.log event_html for event_html in events_arr
       phantom.exit()
