@@ -31,7 +31,7 @@ waitFor = (testFx, onReady, timeOutMillis=8000) ->
 
 page = require('webpage').create()
 
-handle_page = (url, testFx, onReady, kont) ->
+handle_page = (kont, url, testFx, onReady) ->
   page.open url, (status) ->
     if status isnt 'success'
       console.log 'Failed on ' + url
@@ -41,13 +41,15 @@ handle_page = (url, testFx, onReady, kont) ->
         onReady()
         kont()
 
-harvard = (kont) ->
-  handle_page 'http://harvard.com/events',
+harvard_bkstore = (kont) ->
+  handle_page kont, 'http://harvard.com/events',
     ->
       # Check in the page if a specific element is now visible
       page.evaluate ->
         ($(".event_right_details").size()) > 0
     , ->
+      console.log "====================="
+      console.log "Harvard Bookshop"
       events_arr = page.evaluate ->
         events_arr_inner = []
         $(".event_right_details").each( (node) ->
@@ -57,6 +59,29 @@ harvard = (kont) ->
       for event_html in events_arr
         console.log "-----"
         console.log event_html
-    , kont
 
-harvard( -> phantom.exit() )
+coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
+jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
+
+harvard_coop = (kont) ->
+  handle_page kont, coop_url,
+    ->
+      page.evaluate ->
+        document.getElementById('dynamicCOE').firstChild != null
+    , ->
+      console.log "====================="
+      console.log "COOP"
+      page.injectJs jquery_url
+      descs = page.evaluate ->
+        elts = $("#dynamicCOE td").has("div")
+        descs = []
+        elts.each ->
+          str = ""
+          $(this, "div").each( -> str += ($(this).text() + "\n"))
+          descs.push(str)
+        descs
+      for desc in descs
+        console.log desc
+        console.log "--------------"
+
+harvard_bkstore( -> harvard_coop( -> phantom.exit() ))
