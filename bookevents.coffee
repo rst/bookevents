@@ -1,3 +1,5 @@
+# Utility routine (a cut-down version of a phantomJS sample that I began with):
+
 waitFor = (testFx, onReady, timeOutMillis=8000) ->
   start = new Date().getTime()
   condition = false
@@ -17,11 +19,19 @@ waitFor = (testFx, onReady, timeOutMillis=8000) ->
 
 page = require('webpage').create()
 
+# To see output from "console.log" inside "page.evaluate":
 # page.onConsoleMessage = (msg, line, source) -> console.log(msg)
+
+# Suppress stray complaints about junk JS on the pages
+page.onError = -> true
+
+# The list of events we're building up.
 
 events = []
 
 add_event = (event) -> events.push(event)
+
+# Printing it
 
 dump_events = () ->
   for event in events
@@ -31,6 +41,8 @@ dump_events = () ->
     console.log "    headline: " + event.headline
     console.log "DESCRIPTION:"
     console.log event.description
+
+# Mechanics of the scrape
 
 handle_page = (kont, url, testFx, onReady) ->
   page.open url, (status) ->
@@ -80,5 +92,7 @@ harvard_coop = (kont) ->
               "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
           }
         ).get()
+
+# Main routine, such as it is:
 
 harvard_coop( -> harvard_bkstore( -> dump_events(); phantom.exit() ))
