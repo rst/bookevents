@@ -81,9 +81,16 @@ harvard_coop = (kont) ->
       page.injectJs jquery_url
       add_event(event) for event in page.evaluate ->
         $("#dynamicCOE td").has("div.pLeft10").map( ->
-          divs = $("div.pLeft10", this)
+
           # We don't try to capture markup from bncollege.com ---
-          # it's appalling.
+          # it's appalling.  But we do want to turn <br> tags into
+          # whitespace, so...
+
+          $("br",this).after(" ")
+
+          # Extract stuff
+
+          divs = $("div.pLeft10", this)
           {
             headline:    $(divs[1]).text().trim(),
             description: $(divs[2]).text().trim(),
