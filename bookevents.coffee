@@ -70,13 +70,14 @@ harvard_coop = (kont) ->
       add_event(event) for event in page.evaluate ->
         $("#dynamicCOE td").has("div.pLeft10").map( ->
           divs = $("div.pLeft10", this)
-          # Note that what comes out here is messy, with "LOCATION" in the
-          # location, and ugly and superfluous comments just about everywhere.
+          # We don't try to capture markup from bncollege.com ---
+          # it's appalling.
           {
-            headline:    $(divs[1]).html(),
-            description: $(divs[2]).html(),
-            date:        $(divs[0]).html(),
-            location:    "Harvard COOP " + $(divs[4]).html()
+            headline:    $(divs[1]).text().trim(),
+            description: $(divs[2]).text().trim(),
+            date:        $(divs[0]).text().trim(),
+            location:
+              "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
           }
         ).get()
 
