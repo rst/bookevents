@@ -37,6 +37,7 @@ dump_events = () ->
   for event in events
     console.log "----"
     console.log "    date: "     + event.date
+    console.log "    time: "     + event.time
     console.log "    location: " + event.location
     console.log "    headline: " + event.headline
     console.log "DESCRIPTION:"
@@ -79,12 +80,16 @@ harvard_bkstore = (kont) ->
     new ScheduleScraper(
       await: -> ($(".event_right").size()) > 0
       scrape: ->
-        $(".event_right").map( -> {
-          headline:    $("h2", this).html(),
-          description: $(".event_intro", this).html(),
-          date:        $(".event_listing_bubble_date", this).html(),
-          location:    $(".event_listing_bubble_location", this).html()
-        }).get())
+        $(".event_right").map( ->
+          time_info = $(".event_listing_bubble_date", this).html()
+          [day, date, time] = time_info.split('<br>')
+          {
+            headline:    $("h2", this).html(),
+            description: $(".event_intro", this).html(),
+            date:        date.trim(),
+            time:        time.trim(),
+            location:    $(".event_listing_bubble_location", this).html()
+          }).get())
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
@@ -110,6 +115,7 @@ harvard_coop = (kont) ->
             headline:    $(divs[1]).text().trim(),
             description: $(divs[2]).text().trim(),
             date:        $(divs[0]).text().trim(),
+            time:        $(divs[3]).text().replace(/Time:/,'').trim(),
             location:
               "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
           }
