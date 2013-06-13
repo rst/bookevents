@@ -89,7 +89,7 @@ harvard_bkstore = (kont) ->
             description: $(".event_intro", this).html(),
             date:        date.trim(),
             time:        time.trim(),
-            location:    $(".event_listing_bubble_location", this).html()
+            location:    $(".event_listing_bubble_location", this).html().trim()
           }).get())
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
