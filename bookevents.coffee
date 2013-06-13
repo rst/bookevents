@@ -38,6 +38,7 @@ dump_events = () ->
     console.log "----"
     console.log "    date: "     + event.date
     console.log "    time: "     + event.time
+    console.log "    until: "    + event.end_time
     console.log "    location: " + event.location
     console.log "    headline: " + event.headline
     console.log "DESCRIPTION:"
@@ -111,11 +112,14 @@ harvard_coop = (kont) ->
           # Extract stuff
 
           divs = $("div.pLeft10", this)
+          time_info = $(divs[3]).text().replace(/Time:/,'').trim()
+          [start_time, end_time] = time_info.split('-')
           {
             headline:    $(divs[1]).text().trim(),
             description: $(divs[2]).text().trim(),
             date:        $(divs[0]).text().trim(),
-            time:        $(divs[3]).text().replace(/Time:/,'').trim(),
+            time:        start_time,
+            end_time:    end_time,
             location:
               "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
           }
