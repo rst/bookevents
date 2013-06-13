@@ -93,7 +93,8 @@ harvard_bkstore = (kont) ->
           }).get())
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
-jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
+#jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
+jquery_url = "jquery-1.10.1.min.js"
 
 harvard_coop = (kont) ->
   do_scrape kont, coop_url,
@@ -125,6 +126,32 @@ harvard_coop = (kont) ->
           }
         ).get())
 
+brookline_booksmith = (kont) ->
+  do_scrape kont, "http://www.brooklinebooksmith.com/events/mainevent.html",
+    new ScheduleScraper
+      prep: -> page.injectJs jquery_url
+      scrape: ->
+        $("tr[valign=middle] td").has("p").map( ->
+          console.log("!!!!!!!!!!!!!!!!!!Scraping")
+          console.log($(this).html())
+          grafs = $("p",this)
+          description = $(grafs[1]).html()
+          headline = $("strong", grafs[0]).html()
+          $("strong", grafs[0]).remove()
+          [times, location] = $(grafs[0]).html().split("<br>")
+          [date, time] = times.split /\ +at\ +/
+          location = "Brookline Booksmith" if !location? || location.match? /^\s*$/
+          return {
+            headline:    headline,
+            description: description,
+            date:        date,
+            time:        time,
+            location:    location
+          }
+        ).get()
+
 # Main routine, such as it is:
 
-harvard_coop( -> harvard_bkstore( -> dump_events(); phantom.exit() ))
+harvard_coop( -> harvard_bkstore( -> brookline_booksmith( -> dump_events(); phantom.exit() )))
+
+# brookline_booksmith( -> dump_events(); phantom.exit() )
