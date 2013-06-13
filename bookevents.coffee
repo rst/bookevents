@@ -54,32 +54,47 @@ handle_page = (kont, url, testFx, onReady) ->
         onReady()
         kont()
 
+do_scrape = (kont, url, scraper) ->
+  page.open url, (status) ->
+    if status isnt 'success'
+      console.log 'Failed on ' + url
+      kont()
+    else
+      waitFor (-> page.evaluate(scraper.await)), ->
+        scraper.prep()
+        add_event(event) for event in page.evaluate(scraper.scrape)
+        kont()
+
+class ScheduleScraper
+  await: -> true
+  prep: -> true
+  scrape: -> alert("scrape not overridden!")
+  constructor: (overrides) ->
+    @await  = overrides.await  if overrides.await?
+    @prep   = overrides.prep   if overrides.prep?
+    @scrape = overrides.scrape if overrides.scrape?
+
 harvard_bkstore = (kont) ->
-  handle_page kont, 'http://harvard.com/events'
-    , ->
-      # Check in the page if a specific element is now visible
-      page.evaluate ->
-        ($(".event_right").size()) > 0
-    , ->
-      add_event(event) for event in page.evaluate ->
+  do_scrape kont, "http://harvard.com/events",
+    new ScheduleScraper(
+      await: -> ($(".event_right").size()) > 0
+      scrape: ->
         $(".event_right").map( -> {
           headline:    $("h2", this).html(),
           description: $(".event_intro", this).html(),
           date:        $(".event_listing_bubble_date", this).html(),
           location:    $(".event_listing_bubble_location", this).html()
-        }).get()
+        }).get())
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
 
 harvard_coop = (kont) ->
-  handle_page kont, coop_url
-    , ->
-      page.evaluate ->
-        document.getElementById('dynamicCOE').firstChild != null
-    , ->
-      page.injectJs jquery_url
-      add_event(event) for event in page.evaluate ->
+  do_scrape kont, coop_url,
+    new ScheduleScraper(
+      await: -> document.getElementById('dynamicCOE').firstChild != null
+      prep: -> page.injectJs jquery_url
+      scrape: ->
         $("#dynamicCOE td").has("div.pLeft10").map( ->
 
           # We don't try to capture markup from bncollege.com ---
@@ -98,7 +113,7 @@ harvard_coop = (kont) ->
             location:
               "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
           }
-        ).get()
+        ).get())
 
 # Main routine, such as it is:
 
