@@ -129,18 +129,43 @@ harvard_coop = (kont) ->
 brookline_booksmith = (kont) ->
   do_scrape kont, "http://www.brooklinebooksmith.com/events/mainevent.html",
     new ScheduleScraper
-      prep: -> page.injectJs jquery_url
+      prep: ->
+        page.injectJs jquery_url
+        console.log("can't inject lodash") unless page.injectJs 'lodash.js'
       scrape: ->
         $("tr[valign=middle] td").has("p").map( ->
-          console.log("!!!!!!!!!!!!!!!!!!Scraping")
-          console.log($(this).html())
-          grafs = $("p",this)
+
+          # Apologies if this hurts your eyes... it looks like the
+          # HTML here is hand-hacked, to judge by the wildly inconsistent
+          # markup.  So, we do our best.  Note that sometimes the date
+          # and time aren't in a <p> at all, in which case, we still lose;
+          # the "Breakwater Reading Series" on June 21 is the live example
+          # of this as I write.
+
+          grafs = $("p",this)   # XXX can miss date, time preceding first <p>!
           description = $(grafs[1]).html()
-          headline = $("strong", grafs[0]).html()
-          $("strong", grafs[0]).remove()
-          [times, location] = $(grafs[0]).html().split("<br>")
+
+          lines = $(grafs[0]).html().split(/<br\/?>/)
+          lines = _.map( lines, (x) -> x.replace(/\/?<strong\/?>/, '').trim())
+
+          times = lines.shift()
           [date, time] = times.split /\ +at\ +/
-          location = "Brookline Booksmith" if !location? || location.match? /^\s*$/
+
+          # XXX year not present; kludge it for now.
+          # And deal with other vagaries of hand-hacked markup...
+          date = date.replace(/th$/, '') # ... 14th
+          date = date.replace(/st$/, '') # ... 21st
+          date = date.replace(/nd$/, '') # ... 22nd
+          date = date.replace(/^[A-Za-z]+, */, '') + ", 2013"
+
+          if ((lines[0] || '').match(/Coolidge *Corner *Theat/))
+            lines.shift()
+            location = 'Coolidge Corner Theatre (tickets required)'
+          else
+            location = 'Brookline Booksmith'
+
+          headline = lines.join(', ')
+
           return {
             headline:    headline,
             description: description,
