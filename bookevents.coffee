@@ -1,3 +1,6 @@
+page = require('webpage').create()
+_ = require('lodash')
+
 # Utility routine (a cut-down version of a phantomJS sample that I began with):
 
 waitFor = (testFx, onReady, timeOutMillis=8000) ->
@@ -17,8 +20,6 @@ waitFor = (testFx, onReady, timeOutMillis=8000) ->
         clearInterval interval #< Stop this interval
   interval = setInterval f, 250 #< repeat check every 250ms
 
-page = require('webpage').create()
-
 # To see output from "console.log" inside "page.evaluate":
 # page.onConsoleMessage = (msg, line, source) -> console.log(msg)
 
@@ -29,20 +30,28 @@ page.onError = -> true
 
 events = []
 
-add_event = (event) -> events.push(event)
+add_event = (event) ->
+  event.date_int = Date.parse(event.date)
+  event.date_obj = new Date(event.date_int)
+  events.push(event)
 
 # Printing it
 
 dump_events = () ->
-  for event in events
-    console.log "----"
-    console.log "    date: "     + event.date
-    console.log "    time: "     + event.time
-    console.log "    until: "    + event.end_time
-    console.log "    location: " + event.location
-    console.log "    headline: " + event.headline
-    console.log "DESCRIPTION:"
-    console.log event.description
+  groups = _.groupBy( events, "date_int" )
+  date_ints = _.keys( groups ).sort()
+  for date_int in date_ints
+    console.log "======"
+    console.log groups[date_int][0].date_obj
+    for event in groups[date_int]
+      console.log "----"
+      console.log "    date: "     + event.date
+      console.log "    time: "     + event.time
+      console.log "    until: "    + event.end_time
+      console.log "    location: " + event.location
+      console.log "    headline: " + event.headline
+      console.log "DESCRIPTION:"
+      console.log event.description
 
 # Mechanics of the scrape
 
