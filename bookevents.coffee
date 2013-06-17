@@ -39,8 +39,23 @@ add_event = (event) ->
 # Printing it
 
 prolog = """
-  <html>
-  <body>
+<html>
+<head>
+  <style type="text/css">
+    dt.event_date {
+      font-size: 125%;
+      font-weight: bold;
+    }
+    li.event {
+      display: block;
+      padding: 5px;
+      border: 2px solid #800;
+      margin-bottom: 7px;
+      background-color: #fdd;
+    }
+  </style>
+</head>
+<body>
   <h1>Scheduled bookstore readings</h1>
   <dl>
 """
@@ -50,11 +65,11 @@ epilog = """
 """
 
 date_events_template = Handlebars.compile """
-  <dt>{{date}}</dt>
+  <dt class="event_date">{{date}}</dt>
   <dd><ul>
     {{#each events}}
       <li class="event">
-        <div class="where">{{{time}}}, {{location}}</div>
+        <div class="where">{{time}}, {{{location}}}</div>
         <div class="event_headline">{{{headline}}}</div>
         <div class="event_description">{{{description}}}</div>
       </li>
