@@ -1,5 +1,6 @@
-page = require('webpage').create()
+Handlebars = require('handlebars')
 _ = require('lodash')
+page = require('webpage').create()
 
 # Utility routine (a cut-down version of a phantomJS sample that I began with):
 
@@ -37,21 +38,38 @@ add_event = (event) ->
 
 # Printing it
 
+prolog = """
+  <html>
+  <body>
+  <h1>Scheduled bookstore readings</h1>
+  <dl>
+"""
+
+epilog = """
+  </dl></body></html>
+"""
+
+date_events_template = Handlebars.compile """
+  <dt>{{date}}</dt>
+  <dd><ul>
+    {{#each events}}
+      <li class="event">
+        <div class="where">{{{time}}}, {{location}}</div>
+        <div class="event_headline">{{{headline}}}</div>
+        <div class="event_description">{{{description}}}</div>
+      </li>
+    {{/each}}
+  </ul></dd>
+"""
+
 dump_events = () ->
   groups = _.groupBy( events, "date_int" )
   date_ints = _.keys( groups ).sort()
-  for date_int in date_ints
-    console.log "======"
-    console.log groups[date_int][0].date_obj
-    for event in groups[date_int]
-      console.log "----"
-      console.log "    date: "     + event.date
-      console.log "    time: "     + event.time
-      console.log "    until: "    + event.end_time
-      console.log "    location: " + event.location
-      console.log "    headline: " + event.headline
-      console.log "DESCRIPTION:"
-      console.log event.description
+  date_htmls =
+    for date_int in date_ints
+      date = groups[date_int][0].date_obj
+      date_events_template({ date: date, events: groups[date_int] })
+  console.log prolog + date_htmls.join('') + epilog
 
 # Mechanics of the scrape
 
