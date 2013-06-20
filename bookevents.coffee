@@ -106,24 +106,88 @@ do_single_scrape = (url, scraper) ->
     else
       waitFor (-> page.evaluate(scraper.await)), ->
         scraper.prep()
-        add_event(event) for event in page.evaluate(scraper.scrape)
+        scraper.scrape()
         do_scrape()
 
 class ScheduleScraper
   await: -> true
   prep: -> true
-  scrape: -> alert("scrape not overridden!")
-  constructor: (overrides) ->
-    @await  = overrides.await  if overrides.await?
-    @prep   = overrides.prep   if overrides.prep?
-    @scrape = overrides.scrape if overrides.scrape?
+  scrape: -> add_event(event) for event in page.evaluate(@extract_events, this)
+  extract_events: -> alert("extract_events not overridden!")
 
+class SimpleScraper extends ScheduleScraper
+  constructor: (overrides) ->
+    @await          = overrides.await          if overrides.await?
+    @prep           = overrides.prep           if overrides.prep?
+    @scrape         = overrides.scrape         if overrides.scrape?
+    @extract_events = overrides.extract_events if overrides.extract_events?
+
+# A lot of bookstores seem to use a common Drupal framework which may
+# be sourced from (or hosted by) indiebound.org.  (A lot of them are
+# in the same /24 CIDR block.)  Unfortunately, on these, a lot of
+# useful information is available only on the event detail pages, so
+# we pull down the list of events, and then scrape the detail pages
+# individually.
+#
+# FWIW, we have jQuery preloaded in these.  That is, jQuery 1.2.
+
+# Scraping an individual detail page.  Constructor takes overrides,
+# in case some of the index pages have more reliable info on
+# certain fields.
+
+class IbDetailScraper extends ScheduleScraper
+
+  constructor: (event_overrides = {}) ->
+    this.ov = event_overrides
+
+  extract_events: (scraper) ->
+
+    # Bad manners to scrape out their <img> tags; nuke 'em.
+    $("img").remove()
+
+    # Do a little parsing...
+    start_elt = $("div.event-start")
+    start_elt.find("label").remove()
+    times = start_elt.html().trim().split(' ')
+    date = times.shift()
+
+    location_block = $("div.field-field-location > div.field-items")
+
+    # The (sole) event on the detail page:
+    [{
+      headline:    scraper.ov.headline    || $(".title").html()
+      description: scraper.ov.description || $("#content .content p[dir=ltr]").html()
+      date:        scraper.ov.date        || date
+      time:        scraper.ov.time        || times.join(' ')
+      location:    scraper.ov.location    || location_block.html()
+    }]
+
+# Index pages.  Default behavior is to just find the links, and
+# add the appropriate detail scrapes.  Overrides "scrape" and not
+# "extract_events", because ... we're not extracting events.
+
+class IbIndexScraper extends ScheduleScraper
+  scrape: ->
+
+    urls = page.evaluate ->
+      $("div.event a").map(-> this.href).get()
+
+    for url in urls
+      add_scrape( url, new IbDetailScraper )
+
+################################################################
 # Individual scrapes
 
+now = new Date()
+ib_date_fragment = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
+
+add_scrape "http://www.portersquarebooks.com/event/#{ib_date_fragment}/list",
+  new IbIndexScraper
+
 add_scrape "http://harvard.com/events",
-  new ScheduleScraper(
+  new SimpleScraper
     await: -> ($(".event_right").size()) > 0
-    scrape: ->
+    extract_events: ->
       $(".event_right").map( ->
         time_info = $(".event_listing_bubble_date", this).html()
         [day, date, time] = time_info.split('<br>')
@@ -133,17 +197,17 @@ add_scrape "http://harvard.com/events",
           date:        date.trim(),
           time:        time.trim(),
           location:    $(".event_listing_bubble_location", this).html().trim()
-        }).get())
+        }).get()
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 #jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
 jquery_url = "jquery-1.10.1.min.js"
 
 add_scrape coop_url,
-  new ScheduleScraper(
+  new SimpleScraper
     await: -> document.getElementById('dynamicCOE').firstChild != null
     prep: -> page.injectJs jquery_url
-    scrape: ->
+    extract_events: ->
       $("#dynamicCOE td").has("div.pLeft10").map( ->
 
         # We don't try to capture markup from bncollege.com ---
@@ -166,14 +230,14 @@ add_scrape coop_url,
           location:
             "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
         }
-      ).get())
+      ).get()
 
 add_scrape "http://www.brooklinebooksmith.com/events/mainevent.html",
-  new ScheduleScraper
+  new SimpleScraper
     prep: ->
       page.injectJs jquery_url
-      console.log("can't inject lodash") unless page.injectJs 'lodash.js'
-    scrape: ->
+      page.injectJs 'lodash.js'
+    extract_events: ->
       $("tr[valign=middle] td").has("p").map( ->
 
         # Apologies if this hurts your eyes... it looks like the
