@@ -42,18 +42,35 @@ prolog = """
 <html>
 <head>
   <style type="text/css">
+</head>
+<body>
+  <style type="text/css">
+    body {
+      background-color: #fff;
+    }
     dt.event_date {
+      margin-top: 35px;
       font-size: 125%;
       font-weight: bold;
     }
     li.event {
       display: block;
       padding: 5px;
-      border: 2px solid #800;
+      border: 2px solid #88d;
       margin-bottom: 7px;
-      background-color: #fdd;
+      background-color: #eef;
     }
+    li.event div.event_description{ display: none; }
+    li.event div.event_location{ display: none; }
+    li.event.expanded div.event_description{ display: block; }
+    li.event.expanded div.event_location{ display: block; }
   </style>
+  <script src="jquery-1.10.1.min.js"></script>
+  <script>
+    $(function() {
+      $("li.event").click( function() { $(this).toggleClass("expanded") })
+    });
+  </script>
 </head>
 <body>
   <h1>Scheduled bookstore readings</h1>
