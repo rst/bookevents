@@ -251,7 +251,7 @@ add_scrape coop_url,
           date:        $(divs[0]).text().trim(),
           time:        start_time,
           end_time:    end_time,
-          organizer:   "Harvard Coop"
+          organizer:   "Harvard Coop",
           location:
             "Harvard Coop "+$(divs[4]).text().replace(/Location:/,'').trim()
         }
