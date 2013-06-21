@@ -69,9 +69,10 @@ date_events_template = Handlebars.compile """
   <dd><ul>
     {{#each events}}
       <li class="event">
-        <div class="where">{{time}}, {{{location}}}</div>
+        <div class="intro">{{time}}, {{{organizer}}} presents:</div>
         <div class="event_headline">{{{headline}}}</div>
         <div class="event_description">{{{description}}}</div>
+        <div class="event_location">{{{location}}}</div>
       </li>
     {{/each}}
   </ul></dd>
@@ -160,6 +161,7 @@ class IbDetailScraper extends ScheduleScraper
       date:        scraper.ov.date        || date
       time:        scraper.ov.time        || times.join(' ')
       location:    scraper.ov.location    || location_block.html()
+      organizer:   scraper.ov.organizer   || "Somebody"
     }]
 
 # Index pages.  Default behavior is to just find the links, and
@@ -167,13 +169,17 @@ class IbDetailScraper extends ScheduleScraper
 # "extract_events", because ... we're not extracting events.
 
 class IbIndexScraper extends ScheduleScraper
+
+  constructor: (event_overrides) ->
+    @overrides = event_overrides
+
   scrape: ->
+    for subscrape in page.evaluate( @collect_subscrapes, this )
+      add_scrape( subscrape.url,
+                  new IbDetailScraper( _.defaults( subscrape, @overrides )))
 
-    urls = page.evaluate ->
-      $("div.event a").map(-> this.href).get()
-
-    for url in urls
-      add_scrape( url, new IbDetailScraper )
+  collect_subscrapes: ->
+    $("div.event a").map(-> {url: this.href}).get()
 
 ################################################################
 # Individual scrapes
@@ -182,7 +188,7 @@ now = new Date()
 ib_date_fragment = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
 
 add_scrape "http://www.portersquarebooks.com/event/#{ib_date_fragment}/list",
-  new IbIndexScraper
+  new IbIndexScraper( organizer: "Porter Square Books" )
 
 add_scrape "http://harvard.com/events",
   new SimpleScraper
@@ -196,7 +202,8 @@ add_scrape "http://harvard.com/events",
           description: $(".event_intro", this).html(),
           date:        date.trim(),
           time:        time.trim(),
-          location:    $(".event_listing_bubble_location", this).html().trim()
+          location:    $(".event_listing_bubble_location", this).html().trim(),
+          organizer:   "Harvard Book Shop"
         }).get()
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
@@ -227,8 +234,9 @@ add_scrape coop_url,
           date:        $(divs[0]).text().trim(),
           time:        start_time,
           end_time:    end_time,
+          organizer:   "Harvard Coop"
           location:
-            "Harvard COOP "+$(divs[4]).text().replace(/Location:/,'').trim()
+            "Harvard Coop "+$(divs[4]).text().replace(/Location:/,'').trim()
         }
       ).get()
 
@@ -276,7 +284,8 @@ add_scrape "http://www.brooklinebooksmith.com/events/mainevent.html",
           description: description,
           date:        date,
           time:        time,
-          location:    location
+          location:    location,
+          organizer:   "Brookline Booksmith"
         }
       ).get()
 
