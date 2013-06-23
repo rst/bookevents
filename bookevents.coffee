@@ -41,9 +41,7 @@ add_event = (event) ->
 prolog = """
 <html>
 <head>
-  <style type="text/css">
-</head>
-<body>
+  <meta charset="UTF-8"/>
   <style type="text/css">
     body {
       background-color: #fff;
