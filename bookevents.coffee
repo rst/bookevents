@@ -2,6 +2,8 @@ Handlebars = require('handlebars')
 _ = require('lodash')
 page = require('webpage').create()
 
+jquery_url = "jquery-1.10.1.min.js"
+
 # Utility routine (a cut-down version of a phantomJS sample that I began with):
 
 waitFor = (testFx, onReady, timeOutMillis=8000) ->
@@ -146,6 +148,7 @@ class SimpleScraper extends ScheduleScraper
 # individually.
 #
 # FWIW, we have jQuery preloaded in these.  That is, jQuery 1.2.
+# But trying to inject something newer on top...
 
 # Scraping an individual detail page.  Constructor takes overrides,
 # in case some of the index pages have more reliable info on
@@ -155,6 +158,8 @@ class IbDetailScraper extends ScheduleScraper
 
   constructor: (event_overrides = {}) ->
     this.ov = event_overrides
+
+  prep: -> page.injectJs jquery_url
 
   extract_events: (scraper) ->
 
@@ -194,16 +199,22 @@ class IbIndexScraper extends ScheduleScraper
                   new IbDetailScraper( _.defaults( subscrape, @overrides )))
 
   collect_subscrapes: ->
-    $("div.event a").map(-> {url: this.href}).get()
+    $("div.event a[title=view this event]").map(-> {url: this.href}).get()
 
 ################################################################
 # Individual scrapes
 
 now = new Date()
-ib_date_fragment = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
+ib_date_frag = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
 
-add_scrape "http://www.portersquarebooks.com/event/#{ib_date_fragment}/list",
+add_scrape "http://www.portersquarebooks.com/event/#{ib_date_frag}/list",
   new IbIndexScraper( organizer: "Porter Square Books" )
+
+# Brookline Booksmith doesn't link to the standard Indiebound-ish event page,
+# but it's there...
+
+add_scrape "http://www.brooklinebooksmith-shop.com/event/#{ib_date_frag}/list",
+  new IbIndexScraper( organizer: "Brookline Booksmith" )
 
 add_scrape "http://harvard.com/events",
   new SimpleScraper
@@ -223,7 +234,6 @@ add_scrape "http://harvard.com/events",
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 #jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
-jquery_url = "jquery-1.10.1.min.js"
 
 add_scrape coop_url,
   new SimpleScraper
@@ -252,55 +262,6 @@ add_scrape coop_url,
           organizer:   "Harvard Coop",
           location:
             "Harvard Coop "+$(divs[4]).text().replace(/Location:/,'').trim()
-        }
-      ).get()
-
-add_scrape "http://www.brooklinebooksmith.com/events/mainevent.html",
-  new SimpleScraper
-    prep: ->
-      page.injectJs jquery_url
-      page.injectJs 'lodash.js'
-    extract_events: ->
-      $("tr[valign=middle] td").has("p").map( ->
-
-        # Apologies if this hurts your eyes... it looks like the
-        # HTML here is hand-hacked, to judge by the wildly inconsistent
-        # markup.  So, we do our best.  Note that sometimes the date
-        # and time aren't in a <p> at all, in which case, we still lose;
-        # the "Breakwater Reading Series" on June 21 is the live example
-        # of this as I write.
-
-        grafs = $("p",this)   # XXX can miss date, time preceding first <p>!
-        description = $(grafs[1]).html()
-
-        lines = $(grafs[0]).html().split(/<br\/?>/)
-        lines = _.map( lines, (x) -> x.replace(/\/?<strong\/?>/, '').trim())
-
-        times = lines.shift()
-        [date, time] = times.split /\ +at\ +/
-
-        # XXX year not present; kludge it for now.
-        # And deal with other vagaries of hand-hacked markup...
-        date = date.replace(/th$/, '') # ... 14th
-        date = date.replace(/st$/, '') # ... 21st
-        date = date.replace(/nd$/, '') # ... 22nd
-        date = date.replace(/^[A-Za-z]+, */, '') + ", 2013"
-
-        if ((lines[0] || '').match(/Coolidge *Corner *Theat/))
-          lines.shift()
-          location = 'Coolidge Corner Theatre (tickets required)'
-        else
-          location = 'Brookline Booksmith'
-
-        headline = lines.join(', ')
-
-        return {
-          headline:    headline,
-          description: description,
-          date:        date,
-          time:        time,
-          location:    location,
-          organizer:   "Brookline Booksmith"
         }
       ).get()
 
