@@ -203,7 +203,7 @@ class IbDetailScraper extends ScheduleScraper
 
     # The (sole) event on the detail page:
     [{
-      headline:    scraper.ov.headline    || $(".title").html()
+      headline:    scraper.ov.headline    || $(".title").text()
       description: scraper.ov.description || $(desc_selector).html()
       date:        scraper.ov.date        || date
       time:        scraper.ov.time        || times.join(' ')
