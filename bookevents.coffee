@@ -199,11 +199,12 @@ class IbDetailScraper extends ScheduleScraper
     date = times.shift()
 
     location_block = $("div.field-field-location > div.field-items")
+    desc_selector = scraper.ov.description_selector
 
     # The (sole) event on the detail page:
     [{
       headline:    scraper.ov.headline    || $(".title").html()
-      description: scraper.ov.description || $("#content .content p[dir=ltr]").html()
+      description: scraper.ov.description || $(desc_selector).html()
       date:        scraper.ov.date        || date
       time:        scraper.ov.time        || times.join(' ')
       location:    scraper.ov.location    || location_block.html()
@@ -222,13 +223,17 @@ ib_date_frag = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
 # Porter Square books is Indiebound-ish.
 
 add_scrape "http://www.portersquarebooks.com/event/#{ib_date_frag}/list",
-  new IbIndexScraper( organizer: "Porter Square Books" )
+  new IbIndexScraper({
+    organizer: "Porter Square Books",
+    description_selector: "#content .content > p"})
 
 # Brookline Booksmith doesn't link to the standard Indiebound-ish event page,
 # but it's there...
 
 add_scrape "http://www.brooklinebooksmith-shop.com/event/#{ib_date_frag}/list",
-  new IbIndexScraper( organizer: "Brookline Booksmith" )
+  new IbIndexScraper({
+    organizer: "Brookline Booksmith",
+    description_selector: "#main .content > p"})
 
 # Harvard Book Store has a *different* system, which seems sui generis
 # so far... but also requires going to detail pages to get a full
