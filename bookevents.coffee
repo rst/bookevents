@@ -200,11 +200,12 @@ class IbDetailScraper extends ScheduleScraper
 
     location_block = $("div.field-field-location > div.field-items")
     desc_selector = scraper.ov.description_selector
+    desc = $(desc_selector).map( -> "<p>#{$(this).html()}</p>").get().join('')
 
     # The (sole) event on the detail page:
     [{
       headline:    scraper.ov.headline    || $(".title").text()
-      description: scraper.ov.description || $(desc_selector).html()
+      description: scraper.ov.description || desc
       date:        scraper.ov.date        || date
       time:        scraper.ov.time        || times.join(' ')
       location:    scraper.ov.location    || location_block.html()
