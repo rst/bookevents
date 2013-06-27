@@ -199,7 +199,7 @@ class IbIndexScraper extends ScheduleScraper
                   new IbDetailScraper( _.defaults( subscrape, @overrides )))
 
   collect_subscrapes: ->
-    $("div.event a[title=view this event]").map(-> {url: this.href}).get()
+    $("div.event div.title a").map(-> {url: this.href}).get()
 
 ################################################################
 # Individual scrapes
