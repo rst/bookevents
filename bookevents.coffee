@@ -210,11 +210,16 @@ class IbDetailScraper extends ScheduleScraper
       organizer:   scraper.ov.organizer   || "Somebody"
     }]
 
-################################################################
-# Individual scrapes
+# And links to Indiebound-ish event pages frequently have "today's date"
+# embedded, so we make that available in the right format.
 
 now = new Date()
 ib_date_frag = "#{now.getFullYear()}/#{now.getMonth()+1}/#{now.getDate()}"
+
+################################################################
+# Individual scrapes
+
+# Porter Square books is Indiebound-ish.
 
 add_scrape "http://www.portersquarebooks.com/event/#{ib_date_frag}/list",
   new IbIndexScraper( organizer: "Porter Square Books" )
@@ -225,21 +230,36 @@ add_scrape "http://www.portersquarebooks.com/event/#{ib_date_frag}/list",
 add_scrape "http://www.brooklinebooksmith-shop.com/event/#{ib_date_frag}/list",
   new IbIndexScraper( organizer: "Brookline Booksmith" )
 
-add_scrape "http://harvard.com/events",
-  new SimpleScraper
-    await: -> ($(".event_right").size()) > 0
-    extract_events: ->
-      $(".event_right").map( ->
-        time_info = $(".event_listing_bubble_date", this).html()
-        [day, date, time] = time_info.split('<br>')
-        {
-          headline:    $("h2", this).html(),
-          description: $(".event_intro", this).html(),
-          date:        date.trim(),
-          time:        time.trim(),
-          location:    $(".event_listing_bubble_location", this).html().trim(),
-          organizer:   "Harvard Book Shop"
-        }).get()
+# Harvard Book Store has a *different* system, which seems sui generis
+# so far... but also requires going to detail pages to get a full
+# description out.
+
+class HarvardDetailScraper extends ScheduleScraper
+  extract_events: ->
+    time_info = $(".event_details_date .event_details_text").html()
+    [day, date, time] = time_info.split('<br>')
+    details = $("#tab_content_details")
+    details.find(".first_block").remove()
+    $("img").remove()           # do *not* want to scrape images!
+    [{
+       headline:    $("h1").text() + " " + $(".event_intro").text()
+       description: details.find(".block").html(),
+       date:        date.trim(),
+       time:        time.trim(),
+       location:    $(".event_details_location .event_details_text").html()
+       organizer:   "Harvard Book Store"
+    }]
+
+class HarvardIndexScraper extends IndexScraper
+  await: -> ($("a.event_listing_more").size()) > 0
+  collect_subscrapes: ->
+    $("a.event_listing_more").map(-> {url: this.href}).get()
+  build_subscrape: -> new HarvardDetailScraper
+
+add_scrape "http://harvard.com/events", new HarvardIndexScraper
+
+# Here's the Harvard Coop, which has a system that's generic to other
+# Barnes & Noble stores (or at least the college-affiliated ones):
 
 coop_url = 'http://harvardcoopbooks.bncollege.com/webapp/wcs/stores/servlet/BNCBcalendarEventListView?langId=-1&storeId=52084&catalogId=10001'
 #jquery_url = "http://code.jquery.com/jquery-1.10.1.min.js"
