@@ -140,6 +140,22 @@ class SimpleScraper extends ScheduleScraper
     @scrape         = overrides.scrape         if overrides.scrape?
     @extract_events = overrides.extract_events if overrides.extract_events?
 
+# Abstract scraper for an "index page" that points to *other* pages that have
+# events...
+
+class IndexScraper extends ScheduleScraper
+
+  constructor: (event_overrides) ->
+    @overrides = event_overrides
+
+  scrape: ->
+    for subscrape in page.evaluate( @collect_subscrapes, this )
+      add_scrape( subscrape.url,
+                  @build_subscrape( _.defaults( subscrape, @overrides )))
+
+  collect_subscrapes: -> console.log("didn't override collect_subscrapes")
+  build_subscrape: -> console.log("didn't override build_subscrape")
+
 # A lot of bookstores seem to use a common Drupal framework which may
 # be sourced from (or hosted by) indiebound.org.  (A lot of them are
 # in the same /24 CIDR block.)  Unfortunately, on these, a lot of
@@ -149,6 +165,16 @@ class SimpleScraper extends ScheduleScraper
 #
 # FWIW, we have jQuery preloaded in these.  That is, jQuery 1.2.
 # But trying to inject something newer on top...
+
+# Event-list pages here don't contain enough info for a full listing,
+# so we need to scrape individual detail pages.
+
+class IbIndexScraper extends IndexScraper
+
+  collect_subscrapes: ->
+    $("div.event div.title a").map(-> {url: this.href}).get()
+
+  build_subscrape: (params) -> new IbDetailScraper(params)
 
 # Scraping an individual detail page.  Constructor takes overrides,
 # in case some of the index pages have more reliable info on
@@ -183,23 +209,6 @@ class IbDetailScraper extends ScheduleScraper
       location:    scraper.ov.location    || location_block.html()
       organizer:   scraper.ov.organizer   || "Somebody"
     }]
-
-# Index pages.  Default behavior is to just find the links, and
-# add the appropriate detail scrapes.  Overrides "scrape" and not
-# "extract_events", because ... we're not extracting events.
-
-class IbIndexScraper extends ScheduleScraper
-
-  constructor: (event_overrides) ->
-    @overrides = event_overrides
-
-  scrape: ->
-    for subscrape in page.evaluate( @collect_subscrapes, this )
-      add_scrape( subscrape.url,
-                  new IbDetailScraper( _.defaults( subscrape, @overrides )))
-
-  collect_subscrapes: ->
-    $("div.event div.title a").map(-> {url: this.href}).get()
 
 ################################################################
 # Individual scrapes
