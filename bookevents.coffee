@@ -60,10 +60,12 @@ prolog = """
       margin-bottom: 7px;
       background-color: #eef;
     }
-    li.event div.event_description{ display: none; }
-    li.event div.event_location{ display: none; }
-    li.event.expanded div.event_description{ display: block; }
-    li.event.expanded div.event_location{ display: block; }
+    li.event div.intro { font-size: 80%; margin-bottom: 1ex; }
+    li.event div.event_description { display: none; }
+    li.event div.event_location { display: none; }
+    li.event.expanded div.event_description { display: block; }
+    li.event.expanded div.event_location { display: block; }
+    dl.adr dt { display: none; }
   </style>
   <script src="jquery-1.10.1.min.js"></script>
   <script>
