@@ -61,11 +61,20 @@ prolog = """
       margin-bottom: 7px;
       background-color: #eef;
     }
+    li.event div.sillybutton {
+      float: right;
+      font-size: 70%;
+      border: 1px solid black;
+      background-color: #e8e8ff;
+      cursor: pointer;
+    }
     li.event div.intro { font-size: 80%; margin-bottom: 1ex; }
     li.event div.event_description { display: none; }
     li.event div.event_location { display: none; }
     li.event.expanded div.event_description { display: block; }
     li.event.expanded div.event_location { display: block; }
+    li.event div.sillybutton span:before { content: "Expand"; }
+    li.event.expanded div.sillybutton span:before { content: "Contract"; }
     dl.adr dt { display: none; }
   </style>
   <script src="jquery-1.10.1.min.js"></script>
@@ -89,6 +98,7 @@ date_events_template = Handlebars.compile """
   <dd><ul>
     {{#each events}}
       <li class="event">
+        <div class="sillybutton"><span/></div>
         <div class="intro">{{time}}, {{{organizer}}} presents:</div>
         <div class="event_headline">{{{headline}}}</div>
         <div class="event_description">{{{description}}}</div>
