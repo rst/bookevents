@@ -307,7 +307,7 @@ class CoopScraper extends ScheduleScraper
     yearmatch = href.match(/eventYear=([0-9]+)/)
     monthmatch = href.match(/eventMonth=([0-9]+)/)
 
-    year = if yearmatch then yearmatch[1] else new Date().getYear()
+    year = if yearmatch then yearmatch[1] else new Date().getFullYear()
     rawmonth = if monthmatch then monthmatch[1] else new Date().getMonth()
     month = 1+1*rawmonth
 
