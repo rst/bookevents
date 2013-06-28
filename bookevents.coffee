@@ -50,6 +50,7 @@ prolog = """
     }
     dt.event_date {
       margin-top: 35px;
+      margin-bottom: 5px;
       font-size: 125%;
       font-weight: bold;
     }
@@ -103,7 +104,9 @@ dump_events = () ->
   date_htmls =
     for date_int in date_ints
       date = groups[date_int][0].date_obj
-      date_events_template({ date: date, events: groups[date_int] })
+      date_events_template({
+        date: date.toDateString(),
+        events: groups[date_int] })
   console.log prolog + date_htmls.join('') + epilog
 
 # Mechanics of the scrape
