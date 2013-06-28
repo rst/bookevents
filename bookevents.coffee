@@ -249,6 +249,7 @@ class HarvardDetailScraper extends ScheduleScraper
   extract_events: ->
     time_info = $(".event_details_date .event_details_text").html()
     [day, date, time] = time_info.split('<br>')
+    location = $(".event_details_location .event_details_text").html()
     details = $("#tab_content_details")
     details.find(".first_block").remove()
     $("img").remove()           # do *not* want to scrape images!
@@ -257,7 +258,7 @@ class HarvardDetailScraper extends ScheduleScraper
        description: details.find(".block").html(),
        date:        date.trim(),
        time:        time.trim(),
-       location:    $(".event_details_location .event_details_text").html()
+       location:    location,
        organizer:   "Harvard Book Store"
     }]
 
