@@ -47,12 +47,18 @@ prolog = """
   <style type="text/css">
     body {
       background-color: #fff;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    dt.event_date {
+    div.event_day > h2 {
       margin-top: 35px;
       margin-bottom: 5px;
       font-size: 125%;
       font-weight: bold;
+    }
+    div.event_day > ul {
+      margin: 0px;
     }
     li.event {
       display: block;
@@ -61,6 +67,14 @@ prolog = """
       margin-bottom: 7px;
       background-color: #eef;
     }
+    li.event div.intro { font-size: 80%; margin-bottom: 1ex; }
+    li.event div.event_description { display: none; }
+    li.event div.event_location { display: none; }
+    li.event.expanded div.event_description { display: block; }
+    li.event.expanded div.event_location { display: block; }
+
+    /* The "expand/contract" button */
+
     li.event div.sillybutton {
       float: right;
       font-size: 70%;
@@ -68,34 +82,31 @@ prolog = """
       background-color: #e8e8ff;
       cursor: pointer;
     }
-    li.event div.intro { font-size: 80%; margin-bottom: 1ex; }
-    li.event div.event_description { display: none; }
-    li.event div.event_location { display: none; }
-    li.event.expanded div.event_description { display: block; }
-    li.event.expanded div.event_location { display: block; }
     li.event div.sillybutton span:before { content: "Expand"; }
     li.event.expanded div.sillybutton span:before { content: "Contract"; }
+
+    /* Suppress vcard headings in some of what we're copying from the stores */
+
     dl.adr dt { display: none; }
   </style>
   <script src="jquery-1.10.1.min.js"></script>
   <script>
     $(function() {
-      $("li.event").click( function() { $(this).toggleClass("expanded") })
-    });
+      $("div.sillybutton").click( function() {
+         $(this).parents(".event").toggleClass("expanded") })
+       });
   </script>
 </head>
 <body>
   <h1>Scheduled bookstore readings</h1>
-  <dl>
 """
 
-epilog = """
-  </dl></body></html>
-"""
+epilog = "</body></html>"
 
 date_events_template = Handlebars.compile """
-  <dt class="event_date">{{date}}</dt>
-  <dd><ul>
+<div class="event_day">
+  <h2>{{date}}</h2>
+  <ul>
     {{#each events}}
       <li class="event">
         <div class="sillybutton"><span/></div>
@@ -105,7 +116,8 @@ date_events_template = Handlebars.compile """
         <div class="event_location">{{{location}}}</div>
       </li>
     {{/each}}
-  </ul></dd>
+  </ul>
+</div>
 """
 
 dump_events = () ->
