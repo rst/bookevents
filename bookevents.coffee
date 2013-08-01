@@ -275,6 +275,18 @@ class HarvardDetailScraper extends ScheduleScraper
     details = $("#tab_content_details")
     details.find(".first_block").remove()
     $("img").remove()           # do *not* want to scrape images!
+
+    # Limit the damage from broken markup (<li> not in a <ul>)
+    # in descriptions; wrap each in an enclosing <ul>.  Not quite
+    # right, but nothing's quite right.
+
+    details.find(".block > li").each( ->
+      floating_li = $(this)
+      floating_li.after('<ul class="bogonbogonbogon"></ul>')
+      $("ul.bogonbogonbogon").append( floating_li )
+      $("ul.bogonbogonbogon").toggleClass("bogonbogonbogon")
+    )
+
     [{
        headline:    $("h1").text() + " " + $(".event_intro").text()
        description: details.find(".block").html(),
