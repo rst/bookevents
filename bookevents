@@ -1,0 +1,11 @@
+#! /bin/sh
+
+cat bookevents_base.coffee > scratch/bookevents.coffee
+cat bookevents_ib.coffee >> scratch/bookevents.coffee
+cat portersquare.coffee >> scratch/bookevents.coffee
+cat bbooksmith.coffee >> scratch/bookevents.coffee
+cat harvardbooks.coffee >> scratch/bookevents.coffee
+cat harvardcoop.coffee >> scratch/bookevents.coffee
+echo 'do_scrape()' >> scratch/bookevents.coffee
+
+phantomjs scratch/bookevents.coffee
