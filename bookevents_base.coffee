@@ -34,6 +34,19 @@ page.onError = -> true
 events = []
 
 add_event = (event) ->
+
+  # Kludgery to fill in years in dates for the (surprisingly common)
+  # case that the store event pages leave them off.
+
+  if event.date_without_year
+    now = Date.now()
+    this_year = new Date(now).getFullYear()
+    try_date = "#{event.date_without_year}, #{this_year}"
+    if now <= Date.parse(try_date)
+      event.date = try_date
+    else
+      event.date = "#{event.date_without_year}, #{this_year+1}"
+
   event.date_int = Date.parse(event.date)
   event.date_obj = new Date(event.date_int)
   events.push(event)
